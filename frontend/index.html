@@ -101,7 +101,7 @@ $("sc").textContent=s+" / "+Q.length;$("tt").textContent=r[2];
 $("rg").innerHTML=R.map(x=>"<tr"+(x===r?' class="me"':"")+"><td>"+x[0]+"–"+x[1]+"</td><td>"+x[2]+"</td></tr>").join("");$("rec").textContent="Saving your result…";show("res");save(s,r[2],timeUp)}
 let t0=0,rows=[],adminKey=sessionStorage.getItem("quizAdminKey")||"";
 // After deploying the backend on Render, replace this URL with your backend URL.
-const API_BASE="http://localhost:3000";
+const API_BASE="https://gender-quiz-backend.onrender.com";
 const esc=s=>String(s).replace(/[&<>\"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 async function save(s,title,timeUp){
   const payload={score:s,total:Q.length,title,seconds:Math.min(SEC,Math.round((Date.now()-t0)/1000)),timeUp};
