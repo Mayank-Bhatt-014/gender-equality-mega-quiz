@@ -9,6 +9,13 @@ const ADMIN_KEY = process.env.ADMIN_KEY;
 const MONGODB_URI = process.env.MONGODB_URI;
 const DB_NAME = process.env.DB_NAME || "gender_quiz";
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "*";
+app.use(express.json());
+
+app.use(cors({
+    origin: true,
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "x-admin-key"]
+}));
 
 app.use(cors({ origin: FRONTEND_ORIGIN === "*" ? true : FRONTEND_ORIGIN.split(",").map(s => s.trim()) }));
 app.use(express.json({ limit: "20kb" }));
