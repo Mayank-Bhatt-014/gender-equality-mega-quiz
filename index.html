@@ -101,11 +101,34 @@ $("sc").textContent=s+" / "+Q.length;$("tt").textContent=r[2];
 $("rg").innerHTML=R.map(x=>"<tr"+(x===r?' class="me"':"")+"><td>"+x[0]+"–"+x[1]+"</td><td>"+x[2]+"</td></tr>").join("");$("rec").textContent="Saving your result…";show("res");save(s,r[2],timeUp)}
 let P={},db=null,usr=null,t0=0,rows=[];
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-(async()=>{try{db=await claude.use("db");usr=await claude.use("user");if(db&&usr&&usr.canEdit())$("adminbtn").classList.remove("hide")}catch(e){}})();
-async function save(s,title,timeUp){try{if(!db)throw 0;await db.collection("results").doc(await usr.id()).set({score:s,total:Q.length,title,seconds:Math.min(SEC,Math.round((Date.now()-t0)/1000)),timeUp,at:Date.now()});$("rec").textContent="Your score has been recorded anonymously. Thank you for taking part."}catch(e){$("rec").textContent="Your result could not be recorded online. Your score above is still valid."}}
+const LOCAL_KEY="gender_quiz_results_v1";
+function readLocalRows(){try{return JSON.parse(localStorage.getItem(LOCAL_KEY)||"[]")}catch(e){return []}}
+$("adminbtn").classList.remove("hide");
+async function save(s,title,timeUp){
+  const result={score:s,total:Q.length,title,seconds:Math.min(SEC,Math.round((Date.now()-t0)/1000)),timeUp,at:Date.now()};
+  try {
+    const saved=readLocalRows(); saved.push(result);
+    localStorage.setItem(LOCAL_KEY,JSON.stringify(saved));
+    $("rec").textContent="Your result has been saved on this device. Thank you for taking part.";
+  } catch(e) {
+    $("rec").textContent="Your score above is valid, but this browser could not save the result.";
+  }
+}
 $("go").onclick=start;$("again").onclick=()=>show("start");$("back").onclick=()=>show("start");
-$("adminbtn").onclick=async()=>{show("adm");$("ad").textContent="Loading…";try{const sn=await db.collection("results").orderBy("at","desc").get();rows=sn.docs.map(d=>d.data());const n=rows.length,avg=n?(rows.reduce((a,r)=>a+r.score,0)/n).toFixed(1):"0";
-$("ad").innerHTML="<p><b>"+n+"</b> participants. Average score <b>"+avg+"</b> out of 30.</p><table>"+R.map(x=>{const c=rows.filter(r=>r.title===x[2]).length;return"<tr><td>"+x[0]+"–"+x[1]+"</td><td>"+x[2]+"</td><td>"+c+" ("+(n?Math.round(c/n*100):0)+"%)</td></tr>"}).join("")+"</table>"}catch(e){$("ad").textContent="Results could not be loaded."}};
-$("csv").onclick=async()=>{try{const d=await claude.use("downloads"),c=v=>'"'+String(v).replace(/"/g,'""')+'"';await d.save({filename:"gender_quiz_results.csv",data:"Score,Title,Seconds,Submitted\n"+rows.map(r=>[r.score,r.title,r.seconds,new Date(r.at).toISOString()].map(c).join(",")).join("\n")})}catch(e){}};
+$("adminbtn").onclick=()=>{
+  show("adm"); rows=readLocalRows();
+  const n=rows.length,avg=n?(rows.reduce((a,r)=>a+Number(r.score||0),0)/n).toFixed(1):"0";
+  $("ad").innerHTML="<p><b>"+n+"</b> results saved on this device. Average score <b>"+avg+"</b> out of 30.</p><table>"+R.map(x=>{const c=rows.filter(r=>r.title===x[2]).length;return"<tr><td>"+x[0]+"–"+x[1]+"</td><td>"+x[2]+"</td><td>"+c+" ("+(n?Math.round(c/n*100):0)+"%)</td></tr>"}).join("")+"</table>";
+};
+$("csv").onclick=()=>{
+  try {
+    const quote=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
+    const csv=[["Score","Title","Seconds","Submitted"],...rows.map(r=>[r.score,r.title,r.seconds,new Date(r.at).toISOString()])].map(row=>row.map(quote).join(",")).join("\\r\\n");
+    const blob=new Blob(["\\uFEFF",csv],{type:"text/csv;charset=utf-8;"});
+    const url=URL.createObjectURL(blob),a=document.createElement("a");
+    a.href=url;a.download="gender_quiz_results.csv";document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  } catch(e) { alert("CSV download failed. Please try again in a browser."); }
+};
 $("nx").onclick=()=>{if(i===Q.length-1)finish(false);else{i++;draw()}};
 </script></body></html>
